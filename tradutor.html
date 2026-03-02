@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tradutor de Anamnese</title>
+<title>Tradutor de Anamnese - Regional Ceará</title>
 <style>
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f4f8; /* Fundo suave */
+    background-color: #f0f4f8; 
     color: #333;
     display: flex;
     justify-content: center;
@@ -23,7 +23,7 @@
     border-radius: 12px;
     box-shadow: 0 8px 16px rgba(0,0,0,0.08);
     width: 100%;
-    max-width: 600px;
+    max-width: 650px;
   }
   h2 {
     color: #1565c0;
@@ -103,10 +103,10 @@
 <body>
 
 <div class="container">
-  <h2>Tradutor de Sintomas</h2>
-  <p class="subtitle">Converta as falas do paciente para termos técnicos</p>
+  <h2>Tradutor de Sintomas (Ceará)</h2>
+  <p class="subtitle">Traduza expressões populares e regionais para o jargão médico</p>
   
-  <textarea id="textoPaciente" placeholder="Ex: O paciente relata que está com dor de cabeça forte, formigamento no braço e suando muito..."></textarea>
+  <textarea id="textoPaciente" placeholder="Ex: O paciente relata que teve um passamento, tá com uma zoada no ouvido, batedeira no coração e muita gastura..."></textarea>
   
   <button onclick="traduzir()">Extrair Termos Técnicos</button>
 
@@ -114,51 +114,50 @@
 </div>
 
 <script>
-  // Dicionário mapeando expressões populares para termos técnicos baseado nos seus estudos
   const dicionario = [
-    { regex: /\b(formigamento|dormência|dormente)\b/gi, termo: "Parestesia", def: "Dormência; Sensação de formigamento" },
-    { regex: /\b(não urina|sem urinar|parou de urinar)\b/gi, termo: "Anúria", def: "Ausência ou volume crítico de urina (<100µl/dia)" },
-    { regex: /\b(urinar à noite|urina de noite|mijando à noite)\b/gi, termo: "Nictúria", def: "Necessidade de urinar frequentemente durante a noite" },
-    { regex: /\b(sangue na urina|mijando sangue)\b/gi, termo: "Hematúria", def: "Sangue na urina" },
-    { regex: /\b(dor de cabeça)\b/gi, termo: "Cefaleia (ou Cafeleia)", def: "Dor de cabeça" },
-    { regex: /\b(dor de cabeça forte|enxaqueca crônica)\b/gi, termo: "Neuragia", def: "Dor de cabeça (intensa, crônica)" },
-    { regex: /\b(ponto cego|pontos cegos|mancha na visão|manchas na visão)\b/gi, termo: "Escotomas", def: "Pontos cegos ou manchas na visão" },
-    { regex: /\b(zumbido|apito no ouvido)\b/gi, termo: "Acufenos / Tinnitus", def: "Zumbido no ouvido" },
-    { regex: /\b(boca seca|sem saliva)\b/gi, termo: "Xerostomia", def: "Boca seca (sem saliva)" },
-    { regex: /\b(andar|caminhar|andando)\b/gi, termo: "Deambular", def: "Andar (Caminhar)" },
-    { regex: /\b(coração acelerado|batimento rápido|coração rápido)\b/gi, termo: "Taquicardia", def: "Frequência cardíaca elevada (> 100 bpm)" },
-    { regex: /\b(respiração rápida|ofegante|respirando rápido)\b/gi, termo: "Taquipneia", def: "Frequência respiratória elevada (>20 irpm)" },
-    { regex: /\b(febre|quente|febre alta)\b/gi, termo: "Pirexia", def: "Febre" },
-    { regex: /\b(suor excessivo|suando muito|muito suor)\b/gi, termo: "Diaforese", def: "Suor excessivo" },
-    { regex: /\b(coceira|coçando)\b/gi, termo: "Prurido", def: "Coceira" },
-    { regex: /\b(cansaço físico|fraqueza|fraco|cansado)\b/gi, termo: "Astenia", def: "Sensação de fraqueza; Cansaço físico" },
-    { regex: /\b(roxo|roxa|azulada|pontas dos dedos roxas)\b/gi, termo: "Cianose", def: "Coloração azulada por falta de oxigenação" },
-    { regex: /\b(amarelão|amarelada|amarelo|olho amarelo)\b/gi, termo: "Icterícia", def: "Coloração amarelada por acúmulo de bilirrubina" },
-    { regex: /\b(falta de ar|cansado para respirar)\b/gi, termo: "Dispneia", def: "Dificuldade de respirar" },
-    { regex: /\b(falta de ar ao deitar|não consegue deitar)\b/gi, termo: "Ortopneia", def: "\"Dispneia\" ao deitar-se" },
-    { regex: /\b(acorda com falta de ar|falta de ar dormindo)\b/gi, termo: "Dispneia Paroxística Noturna (DPN)", def: "Acordar com falta de ar" },
-    { regex: /\b(dor no coração|dor no peito)\b/gi, termo: "Precordialgia", def: "Dor na região do coração" },
-    { regex: /\b(batedeira|sentindo o coração bater)\b/gi, termo: "Palpitação", def: "Percepção subjetiva dos batimentos cardíacos" },
-    { regex: /\b(tosse com sangue|tossindo sangue)\b/gi, termo: "Hemoptise", def: "Tosse com sangue" },
-    { regex: /\b(desmaio|apagão|desmaiou)\b/gi, termo: "Síncope", def: "Desmaio" },
-    { regex: /\b(dificuldade de engolir|entalando)\b/gi, termo: "Disfagia", def: "Dificuldade de engolir" },
-    { regex: /\b(dor ao engolir|doendo pra engolir)\b/gi, termo: "Odinofagia", def: "Dor ao engolir" },
-    { regex: /\b(azia|queimação|queimando o peito)\b/gi, termo: "Pirose", def: "Queimação retroesternal (Azia)" },
-    { regex: /\b(vômito|vomitando)\b/gi, termo: "Êmese", def: "Vômito" },
-    { regex: /\b(vômito com sangue|vomitando sangue)\b/gi, termo: "Hematêmese", def: "Vômito com sangue" },
-    { regex: /\b(fezes escuras|fezes com sangue|cocô com sangue|sangue nas fezes)\b/gi, termo: "Melena", def: "Fezes com sangue" },
-    { regex: /\b(sangue vivo no ânus|sangrando pelo ânus)\b/gi, termo: "Enterorragia", def: "Sangue vivo em grande quantidade (via anal)" },
-    { regex: /\b(salivação excessiva|babando|muita saliva)\b/gi, termo: "Sialorreia / Sialose", def: "Salivação excessiva" },
-    { regex: /\b(dor ao urinar|ardência ao urinar|ardor pra mijar)\b/gi, termo: "Disúria", def: "Dor ao urinar" },
-    { regex: /\b(urinar toda hora|mijar toda hora)\b/gi, termo: "Polaciúria", def: "Frequência urinária elevada (pouco volume de urina)" },
-    { regex: /\b(muita urina|mijando muito)\b/gi, termo: "Poliúria", def: "Volume urinário elevado" },
+    { regex: /\b(formigamento|dormência|dormente|adormecido|formigando)\b/gi, termo: "Parestesia", def: "Dormência; Sensação de formigamento" },
+    { regex: /\b(não urina|sem urinar|parou de urinar|mijo preso|não sai mijo)\b/gi, termo: "Anúria", def: "Ausência ou volume crítico de urina (<100µl/dia)" },
+    { regex: /\b(urinar à noite|urina de noite|mijando à noite|levantando pra mijar)\b/gi, termo: "Nictúria", def: "Necessidade de urinar frequentemente durante a noite" },
+    { regex: /\b(sangue na urina|mijando sangue|mijo com sangue)\b/gi, termo: "Hematúria", def: "Sangue na urina" },
+    { regex: /\b(dor de cabeça|dor no quengo|cabeça estourando|cabeça pesada)\b/gi, termo: "Cefaleia", def: "Dor de cabeça" },
+    { regex: /\b(enxaqueca|dor de cabeça forte demais|dor crônica na cabeça)\b/gi, termo: "Neuragia", def: "Dor de cabeça (intensa, crônica)" },
+    { regex: /\b(ponto cego|mancha na visão|vendo ponto preto|vista manchada)\b/gi, termo: "Escotomas", def: "Pontos cegos ou manchas na visão" },
+    { regex: /\b(zumbido|apito no ouvido|zoada no ouvido|grilo no ouvido|ouvido zunindo)\b/gi, termo: "Acufenos / Tinnitus", def: "Zumbido no ouvido" },
+    { regex: /\b(boca seca|sem saliva|boca amarga e seca|boca esturricada)\b/gi, termo: "Xerostomia", def: "Boca seca (sem saliva)" },
+    { regex: /\b(andar|caminhar|andando|bater perna)\b/gi, termo: "Deambular", def: "Andar (Caminhar)" },
+    { regex: /\b(coração acelerado|batimento rápido|coração rápido|coração disparado|coração a mil)\b/gi, termo: "Taquicardia", def: "Frequência cardíaca elevada (> 100 bpm)" },
+    { regex: /\b(respiração rápida|ofegante|respirando rápido|fôlego curto)\b/gi, termo: "Taquipneia", def: "Frequência respiratória elevada (>20 irpm)" },
+    { regex: /\b(febre|quente|febre alta|corpo quente|quente que nem brasa|pegando fogo|febrão)\b/gi, termo: "Pirexia", def: "Febre" },
+    { regex: /\b(suor excessivo|suando muito|muito suor|suando frio|pingando de suor)\b/gi, termo: "Diaforese", def: "Suor excessivo" },
+    { regex: /\b(coceira|coçando|pinicando|comichão|pereba coçando)\b/gi, termo: "Prurido", def: "Coceira" },
+    { regex: /\b(cansaço físico|fraqueza|fraco|arriado|desmilinguido|sem sustância|frouxeza|moleza|desacorçoado)\b/gi, termo: "Astenia", def: "Sensação de fraqueza; Cansaço físico" },
+    { regex: /\b(roxo|roxa|azulada|pontas dos dedos roxas|boca roxa|arroxado)\b/gi, termo: "Cianose", def: "Coloração azulada por falta de oxigenação" },
+    { regex: /\b(amarelão|amarelada|amarelo|olho amarelo|cara amarela)\b/gi, termo: "Icterícia", def: "Coloração amarelada por acúmulo de bilirrubina" },
+    { regex: /\b(falta de ar|cansado para respirar|cansaço no peito|puxando o ar|sem fôlego|cansaço pra puxar o ar)\b/gi, termo: "Dispneia", def: "Dificuldade de respirar" }, 
+    { regex: /\b(falta de ar ao deitar|não consegue deitar|sufoca quando deita)\b/gi, termo: "Ortopneia", def: "\"Dispneia\" ao deitar-se" },
+    { regex: /\b(acorda com falta de ar|falta de ar dormindo|acorda sufocado)\b/gi, termo: "Dispneia Paroxística Noturna (DPN)", def: "Acordar com falta de ar" },
+    { regex: /\b(dor no coração|dor no peito|aperto no peito)\b/gi, termo: "Precordialgia", def: "Dor na região do coração" },
+    { regex: /\b(batedeira|sentindo o coração bater|coração pulando|batedeira no coração)\b/gi, termo: "Palpitação", def: "Percepção subjetiva dos batimentos cardíacos" },
+    { regex: /\b(tosse com sangue|tossindo sangue|esgarrando sangue|escarro com sangue)\b/gi, termo: "Hemoptise", def: "Tosse com sangue" },
+    { regex: /\b(desmaio|apagão|desmaiou|teve um passamento|teto preto|apagou|teve um treco)\b/gi, termo: "Síncope", def: "Desmaio" },
+    { regex: /\b(dificuldade de engolir|entalando|não desce nada|garganta fechada)\b/gi, termo: "Disfagia", def: "Dificuldade de engolir" },
+    { regex: /\b(dor ao engolir|doendo pra engolir|rasgando a garganta)\b/gi, termo: "Odinofagia", def: "Dor ao engolir" },
+    { regex: /\b(azia|queimação|queimando o peito|gastura|fogo no estômago)\b/gi, termo: "Pirose", def: "Queimação retroesternal (Azia)" },
+    { regex: /\b(vômito|vomitando|botando pra fora|chamando o raul|botando os bofe pra fora)\b/gi, termo: "Êmese", def: "Vômito" },
+    { regex: /\b(vômito com sangue|vomitando sangue|botando sangue pra fora)\b/gi, termo: "Hematêmese", def: "Vômito com sangue" },
+    { regex: /\b(fezes escuras|fezes com sangue|cocô com sangue|sangue nas fezes|obra preta|obrando sangue)\b/gi, termo: "Melena", def: "Fezes com sangue" },
+    { regex: /\b(sangue vivo no ânus|sangrando pelo ânus|sangrando por baixo)\b/gi, termo: "Enterorragia", def: "Sangue vivo em grande quantidade (via anal)" },
+    { regex: /\b(salivação excessiva|babando|muita saliva|aguando)\b/gi, termo: "Sialorreia / Sialose", def: "Salivação excessiva" },
+    { regex: /\b(dor ao urinar|ardência ao urinar|ardor pra mijar|mijo ardendo|doendo pra mijar)\b/gi, termo: "Disúria", def: "Dor ao urinar" },
+    { regex: /\b(urinar toda hora|mijar toda hora|mijadeira|mijando de gota em gota)\b/gi, termo: "Polaciúria", def: "Frequência urinária elevada (pouco volume de urina)" },
+    { regex: /\b(muita urina|mijando muito|se mijando muito)\b/gi, termo: "Poliúria", def: "Volume urinário elevado" },
     { regex: /\b(pouca urina|mijando pouco)\b/gi, termo: "Oligúria", def: "Volume urinário diminuído" }
   ];
 
   function traduzir() {
     const texto = document.getElementById('textoPaciente').value;
     const divResultados = document.getElementById('resultados');
-    divResultados.innerHTML = ''; // Limpa resultados anteriores
+    divResultados.innerHTML = ''; 
 
     if (!texto.trim()) {
       divResultados.innerHTML = '<p class="vazio">Por favor, digite alguma queixa do paciente acima.</p>';
@@ -167,14 +166,12 @@
 
     let termosEncontrados = [];
 
-    // Busca as correspondências
     dicionario.forEach(item => {
       if (texto.match(item.regex)) {
         termosEncontrados.push(item);
       }
     });
 
-    // Exibe os resultados
     if (termosEncontrados.length > 0) {
       termosEncontrados.forEach(item => {
         const divItem = document.createElement('div');
