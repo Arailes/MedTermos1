@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tradutor de Anamnese</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f4f8; /* Fundo suave */
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 600px;
+  }
+  h2 {
+    color: #1565c0;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+  p.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+  }
+  textarea {
+    width: 100%;
+    height: 120px;
+    padding: 15px;
+    border: 2px solid #e3f2fd;
+    border-radius: 8px;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    font-size: 16px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: #90caf9;
+  }
+  button {
+    width: 100%;
+    background-color: #1565c0;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+  }
+  button:hover {
+    background-color: #0d47a1;
+  }
+  button:active {
+    transform: scale(0.98);
+  }
+  #resultados {
+    margin-top: 25px;
+  }
+  .resultado-item {
+    background-color: #f8fbff;
+    border-left: 5px solid #1565c0;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+  }
+  .termo-tecnico {
+    font-weight: bold;
+    color: #0d47a1;
+    font-size: 1.2em;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .definicao {
+    color: #424242;
+    margin: 0;
+  }
+  .vazio {
+    text-align: center;
+    color: #757575;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Tradutor de Sintomas</h2>
+  <p class="subtitle">Converta as falas do paciente para termos técnicos</p>
+  
+  <textarea id="textoPaciente" placeholder="Ex: O paciente relata que está com dor de cabeça forte, formigamento no braço e suando muito..."></textarea>
+  
+  <button onclick="traduzir()">Extrair Termos Técnicos</button>
+
+  <div id="resultados"></div>
+</div>
+
+<script>
+  // Dicionário mapeando expressões populares para termos técnicos baseado nos seus estudos
+  const dicionario = [
+    { regex: /\b(formigamento|dormência|dormente)\b/gi, termo: "Parestesia", def: "Dormência; Sensação de formigamento" },
+    { regex: /\b(não urina|sem urinar|parou de urinar)\b/gi, termo: "Anúria", def: "Ausência ou volume crítico de urina (<100µl/dia)" },
+    { regex: /\b(urinar à noite|urina de noite|mijando à noite)\b/gi, termo: "Nictúria", def: "Necessidade de urinar frequentemente durante a noite" },
+    { regex: /\b(sangue na urina|mijando sangue)\b/gi, termo: "Hematúria", def: "Sangue na urina" },
+    { regex: /\b(dor de cabeça)\b/gi, termo: "Cefaleia (ou Cafeleia)", def: "Dor de cabeça" },
+    { regex: /\b(dor de cabeça forte|enxaqueca crônica)\b/gi, termo: "Neuragia", def: "Dor de cabeça (intensa, crônica)" },
+    { regex: /\b(ponto cego|pontos cegos|mancha na visão|manchas na visão)\b/gi, termo: "Escotomas", def: "Pontos cegos ou manchas na visão" },
+    { regex: /\b(zumbido|apito no ouvido)\b/gi, termo: "Acufenos / Tinnitus", def: "Zumbido no ouvido" },
+    { regex: /\b(boca seca|sem saliva)\b/gi, termo: "Xerostomia", def: "Boca seca (sem saliva)" },
+    { regex: /\b(andar|caminhar|andando)\b/gi, termo: "Deambular", def: "Andar (Caminhar)" },
+    { regex: /\b(coração acelerado|batimento rápido|coração rápido)\b/gi, termo: "Taquicardia", def: "Frequência cardíaca elevada (> 100 bpm)" },
+    { regex: /\b(respiração rápida|ofegante|respirando rápido)\b/gi, termo: "Taquipneia", def: "Frequência respiratória elevada (>20 irpm)" },
+    { regex: /\b(febre|quente|febre alta)\b/gi, termo: "Pirexia", def: "Febre" },
+    { regex: /\b(suor excessivo|suando muito|muito suor)\b/gi, termo: "Diaforese", def: "Suor excessivo" },
+    { regex: /\b(coceira|coçando)\b/gi, termo: "Prurido", def: "Coceira" },
+    { regex: /\b(cansaço físico|fraqueza|fraco|cansado)\b/gi, termo: "Astenia", def: "Sensação de fraqueza; Cansaço físico" },
+    { regex: /\b(roxo|roxa|azulada|pontas dos dedos roxas)\b/gi, termo: "Cianose", def: "Coloração azulada por falta de oxigenação" },
+    { regex: /\b(amarelão|amarelada|amarelo|olho amarelo)\b/gi, termo: "Icterícia", def: "Coloração amarelada por acúmulo de bilirrubina" },
+    { regex: /\b(falta de ar|cansado para respirar)\b/gi, termo: "Dispneia", def: "Dificuldade de respirar" },
+    { regex: /\b(falta de ar ao deitar|não consegue deitar)\b/gi, termo: "Ortopneia", def: "\"Dispneia\" ao deitar-se" },
+    { regex: /\b(acorda com falta de ar|falta de ar dormindo)\b/gi, termo: "Dispneia Paroxística Noturna (DPN)", def: "Acordar com falta de ar" },
+    { regex: /\b(dor no coração|dor no peito)\b/gi, termo: "Precordialgia", def: "Dor na região do coração" },
+    { regex: /\b(batedeira|sentindo o coração bater)\b/gi, termo: "Palpitação", def: "Percepção subjetiva dos batimentos cardíacos" },
+    { regex: /\b(tosse com sangue|tossindo sangue)\b/gi, termo: "Hemoptise", def: "Tosse com sangue" },
+    { regex: /\b(desmaio|apagão|desmaiou)\b/gi, termo: "Síncope", def: "Desmaio" },
+    { regex: /\b(dificuldade de engolir|entalando)\b/gi, termo: "Disfagia", def: "Dificuldade de engolir" },
+    { regex: /\b(dor ao engolir|doendo pra engolir)\b/gi, termo: "Odinofagia", def: "Dor ao engolir" },
+    { regex: /\b(azia|queimação|queimando o peito)\b/gi, termo: "Pirose", def: "Queimação retroesternal (Azia)" },
+    { regex: /\b(vômito|vomitando)\b/gi, termo: "Êmese", def: "Vômito" },
+    { regex: /\b(vômito com sangue|vomitando sangue)\b/gi, termo: "Hematêmese", def: "Vômito com sangue" },
+    { regex: /\b(fezes escuras|fezes com sangue|cocô com sangue|sangue nas fezes)\b/gi, termo: "Melena", def: "Fezes com sangue" },
+    { regex: /\b(sangue vivo no ânus|sangrando pelo ânus)\b/gi, termo: "Enterorragia", def: "Sangue vivo em grande quantidade (via anal)" },
+    { regex: /\b(salivação excessiva|babando|muita saliva)\b/gi, termo: "Sialorreia / Sialose", def: "Salivação excessiva" },
+    { regex: /\b(dor ao urinar|ardência ao urinar|ardor pra mijar)\b/gi, termo: "Disúria", def: "Dor ao urinar" },
+    { regex: /\b(urinar toda hora|mijar toda hora)\b/gi, termo: "Polaciúria", def: "Frequência urinária elevada (pouco volume de urina)" },
+    { regex: /\b(muita urina|mijando muito)\b/gi, termo: "Poliúria", def: "Volume urinário elevado" },
+    { regex: /\b(pouca urina|mijando pouco)\b/gi, termo: "Oligúria", def: "Volume urinário diminuído" }
+  ];
+
+  function traduzir() {
+    const texto = document.getElementById('textoPaciente').value;
+    const divResultados = document.getElementById('resultados');
+    divResultados.innerHTML = ''; // Limpa resultados anteriores
+
+    if (!texto.trim()) {
+      divResultados.innerHTML = '<p class="vazio">Por favor, digite alguma queixa do paciente acima.</p>';
+      return;
+    }
+
+    let termosEncontrados = [];
+
+    // Busca as correspondências
+    dicionario.forEach(item => {
+      if (texto.match(item.regex)) {
+        termosEncontrados.push(item);
+      }
+    });
+
+    // Exibe os resultados
+    if (termosEncontrados.length > 0) {
+      termosEncontrados.forEach(item => {
+        const divItem = document.createElement('div');
+        divItem.className = 'resultado-item';
+        divItem.innerHTML = `<span class="termo-tecnico">${item.termo}</span>
+                             <p class="definicao">${item.def}</p>`;
+        divResultados.appendChild(divItem);
+      });
+    } else {
+      divResultados.innerHTML = '<p class="vazio">Nenhum termo técnico correspondente encontrado no banco de dados.</p>';
+    }
+  }
+</script>
+
+</body>
+</html>
